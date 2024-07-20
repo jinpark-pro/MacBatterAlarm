@@ -19,6 +19,11 @@ class BatteryNotifier {
         timer = Timer.scheduledTimer(timeInterval: 60.0, target: self, selector: #selector(checkBatterStatus), userInfo: nil, repeats: true)
     }
     
+    func stopMonitoring() {
+        timer?.invalidate()
+        timer = nil
+    }
+    
     @objc func checkBatterStatus() {
         print("check")
         let snapshot = IOPSCopyPowerSourcesInfo().takeRetainedValue()
@@ -26,13 +31,17 @@ class BatteryNotifier {
         if let source = sources.first {
             if let info = IOPSGetPowerSourceDescription(snapshot, source).takeUnretainedValue() as? [String: Any] {
                 if let currentCapacity = info[kIOPSCurrentCapacityKey] as? Int,
-                   let maxCapacity = info[kIOPSMaxCapacityKey] as? Int {
-                    let batterLevel = (Double(currentCapacity) / Double(maxCapacity)) * 100
-                    if batterLevel >= 80 {
-                        print("batter is more than or equal to 80%")
-                        sendNotification()
+                   let maxCapacity = info[kIOPSMaxCapacityKey] as? Int,
+                   let isCharging = info[kIOPSIsChargingKey] as? Bool {
+                    if true {
+                        let batterLevel = (Double(currentCapacity) / Double(maxCapacity)) * 100
+                        if batterLevel >= 80 {
+                            print("batter is more than or equal to 80%")
+                            sendNotification()
+                        }
                     } else {
-                        print("batter is less than 80%")
+                        print("stop monitoring")
+                        stopMonitoring()
                     }
                 }
             }
